@@ -1,5 +1,5 @@
 class RespondersController < ApplicationController
-  before_action :set_responder, only: [:show, :edit, :update, :destroy]
+  before_action :set_responder, only: [:show, :update]
   before_action :set_default_response_format
 
   def index
@@ -11,10 +11,14 @@ class RespondersController < ApplicationController
   end
 
   def new
-    @responder = Responder.new
+    render json: { message: 'page not found' }, status: 404
   end
 
   def edit
+    @responder = Responder.find_by_name(params[:name])
+    unless @responder
+      render json: { message: 'page not found' }, status: 404
+    end
   end
 
   def create
@@ -35,11 +39,12 @@ class RespondersController < ApplicationController
   end
 
   def destroy
-    @responder.destroy
-    respond_to do |format|
-      format.html { redirect_to responders_url, notice: 'Responder was successfully destroyed.' }
-      format.json { head :no_content }
+    @responder = Responder.find_by_name(params[:name])
+    if @responder.nil?
+      render json: { message: 'page not found' }, status: 404
     end
+
+    @responder.destroy unless @responder.nil?
   end
 
   private
