@@ -1,28 +1,20 @@
 class EmergenciesController < ApplicationController
   before_action :set_emergency, only: [:show, :edit, :update, :destroy]
 
-  # GET /emergencies
-  # GET /emergencies.json
   def index
     @emergencies = Emergency.all
   end
 
-  # GET /emergencies/1
-  # GET /emergencies/1.json
   def show
   end
 
-  # GET /emergencies/new
   def new
     @emergency = Emergency.new
   end
 
-  # GET /emergencies/1/edit
   def edit
   end
 
-  # POST /emergencies
-  # POST /emergencies.json
   def create
     @emergency = Emergency.new(emergency_params)
 
@@ -37,8 +29,6 @@ class EmergenciesController < ApplicationController
     end
   end
 
-  # PATCH/PUT /emergencies/1
-  # PATCH/PUT /emergencies/1.json
   def update
     respond_to do |format|
       if @emergency.update(emergency_params)
@@ -51,8 +41,6 @@ class EmergenciesController < ApplicationController
     end
   end
 
-  # DELETE /emergencies/1
-  # DELETE /emergencies/1.json
   def destroy
     @emergency.destroy
     respond_to do |format|
@@ -62,13 +50,12 @@ class EmergenciesController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_emergency
-      @emergency = Emergency.find(params[:id])
-    end
 
-    # Never trust parameters from the scary internet, only allow the white list through.
-    def emergency_params
-      params[:emergency]
-    end
+  def set_emergency
+    @emergency = Emergency.find(params[:id])
+  end
+
+  def emergency_params
+    params[:emergency]
+  end
 end

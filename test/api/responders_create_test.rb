@@ -12,7 +12,7 @@ class RespondersCreateTest < ActionDispatch::IntegrationTest
   test 'POST /responders/ simple creation' do
     post '/responders/', responder: { type: 'Fire', name: 'F-NEW', capacity: 1 }
     body = JSON.parse(response.body)
- 
+
     assert_equal 201, response.status
     assert_equal(
       {
