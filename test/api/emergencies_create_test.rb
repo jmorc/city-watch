@@ -1,4 +1,4 @@
-require 'test_helper' 
+require 'test_helper'
 
 class EmergenciesCreateTest < ActionDispatch::IntegrationTest
   test 'POST /emergencies/ simple creation' do

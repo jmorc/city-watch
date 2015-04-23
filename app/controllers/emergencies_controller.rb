@@ -3,10 +3,16 @@ class EmergenciesController < ApplicationController
 
   def index
     @emergencies = Emergency.all
+    render 'emergencies/index'
   end
 
   def show
-    render 'emergencies/show'
+    @emergency = Emergency.find_by_code(params[:id])
+    if !@emergency
+      render_404_error
+    else
+      render 'emergencies/show'
+    end
   end
 
   def new
@@ -44,15 +50,14 @@ class EmergenciesController < ApplicationController
   end
 
   def update
-    respond_to do |format|
-      if @emergency.update(emergency_params)
-        format.html { redirect_to @emergency, notice: 'Emergency was successfully updated.' }
-        format.json { render :show, status: :ok, location: @emergency }
-      else
-        format.html { render :edit }
-        format.json { render json: @emergency.errors, status: :unprocessable_entity }
-      end
+    if params[:emergency].key?(:code)
+      render json: { message: 'found unpermitted parameter: code' },
+             status: :unprocessable_entity
+      return
     end
+    @emergency = Emergency.find_by_code(params[:id])
+    @emergency.update(emergency_params)
+    render 'emergencies/show'
   end
 
   def destroy
@@ -70,6 +75,8 @@ class EmergenciesController < ApplicationController
   end
 
   def emergency_params
-    params.require(:emergency).permit(:code, :fire_severity, :police_severity, :medical_severity, :full_response)
+    params.require(:emergency).permit(:code, :fire_severity,
+                   :police_severity, :medical_severity, 
+                   :full_response, :resolved_at)
   end
 end
