@@ -1,6 +1,5 @@
 class EmergenciesController < ApplicationController
   before_action :set_default_response_format
-  before_action :set_emergency, only: [:show, :edit, :update, :destroy]
 
   def index
     @emergencies = Emergency.all
@@ -11,10 +10,11 @@ class EmergenciesController < ApplicationController
   end
 
   def new
-    @emergency = Emergency.new
+    render_404_error
   end
 
   def edit
+    render_404_error
   end
 
   def create
@@ -56,17 +56,13 @@ class EmergenciesController < ApplicationController
   end
 
   def destroy
-    @emergency.destroy
-    respond_to do |format|
-      format.html { redirect_to emergencies_url, notice: 'Emergency was successfully destroyed.' }
-      format.json { head :no_content }
-    end
+    render_404_error
   end
 
   private
 
-  def render_unpermitted_param_error
-    
+  def render_404_error
+    render json: { message: 'page not found'}, status: 404
   end
 
   def set_emergency
