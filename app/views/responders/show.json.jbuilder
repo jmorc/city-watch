@@ -1,3 +1,3 @@
 json.responder do
-  json.(@responder, :emergency_code, :type, :name, :capacity, :on_duty)
+  json.partial! 'responders/responder', responder: @responder
 end

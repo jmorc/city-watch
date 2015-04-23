@@ -1,12 +1,17 @@
 class RespondersController < ApplicationController
-  before_action :set_responder, only: [:show, :update]
   before_action :set_default_response_format
 
   def index
     @responders = Responder.all
+    render 'responders/index'
   end
 
-  def show
+  def show  
+    @responder = Responder.find_by_name(params[:id])
+    unless @responder
+      render json: { message: 'page not found' }, status: 404
+      return
+    end
     render 'responders/show'
   end
 
@@ -31,10 +36,13 @@ class RespondersController < ApplicationController
   end
 
   def update
-    if @responder.update(responder_params)
-      render 'responders/show', notice: 'Responder was successfully updated.'
+    if responder_params.has_key?(:on_duty)
+      @responder = Responder.find_by_name(params[:id])
+      @responder.update_attribute(:on_duty, responder_params[:on_duty])
+      render 'responders/show'
     else
-      format.json { render json: @responder.errors, status: :unprocessable_entity }
+      message = 'found unpermitted parameter: ' + responder_params.keys[0]
+      render json: { message: message }, status: :unprocessable_entity
     end
   end
 
@@ -42,9 +50,9 @@ class RespondersController < ApplicationController
     @responder = Responder.find_by_name(params[:name])
     if @responder.nil?
       render json: { message: 'page not found' }, status: 404
+    else
+      @responder.destroy unless @responder.nil?
     end
-
-    @responder.destroy unless @responder.nil?
   end
 
   private
@@ -73,10 +81,6 @@ class RespondersController < ApplicationController
       unpermitted_parameter = [false]
     end
     unpermitted_parameter
-  end
-
-  def set_responder
-    @responder = Responder.find(params[:id])
   end
 
   def set_default_response_format
