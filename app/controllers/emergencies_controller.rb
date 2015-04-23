@@ -24,23 +24,8 @@ class EmergenciesController < ApplicationController
   end
 
   def create
+    return if unpermitted_params?
     @emergency = Emergency.new(emergency_params)
-    
-    if params[:emergency].key?(:id)
-      parameter_error = true
-      unpermitted_parameter = 'id'
-    elsif params[:emergency].key?(:resolved_at)
-      parameter_error = true
-      unpermitted_parameter = 'resolved_at'
-    else
-      parameter_error = false
-    end
-
-    if parameter_error
-      message = 'found unpermitted parameter: ' + unpermitted_parameter
-      render json: { message: message }, status: :unprocessable_entity
-      return
-    end
 
     if @emergency.save
       render 'emergencies/show', status: :created
@@ -66,8 +51,27 @@ class EmergenciesController < ApplicationController
 
   private
 
+  def unpermitted_params?
+    if params[:emergency].key?(:id)
+      parameter_error = true
+      unpermitted_parameter = 'id'
+    elsif params[:emergency].key?(:resolved_at)
+      parameter_error = true
+      unpermitted_parameter = 'resolved_at'
+    else
+      parameter_error = false
+    end
+
+    if parameter_error
+      message = 'found unpermitted parameter: ' + unpermitted_parameter
+      render json: { message: message }, status: :unprocessable_entity
+    end
+
+    parameter_error
+  end
+
   def render_404_error
-    render json: { message: 'page not found'}, status: 404
+    render json: { message: 'page not found' }, status: 404
   end
 
   def set_emergency
@@ -76,7 +80,7 @@ class EmergenciesController < ApplicationController
 
   def emergency_params
     params.require(:emergency).permit(:code, :fire_severity,
-                   :police_severity, :medical_severity, 
-                   :full_response, :resolved_at)
+                                      :police_severity, :medical_severity,
+                                      :full_response, :resolved_at)
   end
 end

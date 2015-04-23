@@ -10,35 +10,27 @@ class Responder < ActiveRecord::Base
   self.inheritance_column = nil
 
   def self.report_capacity
-  	fire_responders = Responder.where(type: 'Fire')
-  	fire_capacity = Responder.find_capacity(fire_responders)
+    fire_responders = Responder.where(type: 'Fire')
+    fire_capacity = Responder.find_capacity(fire_responders)
+    police_responders = Responder.where(type: 'Police')
+    police_capacity = Responder.find_capacity(police_responders)
+    medical_responders = Responder.where(type: 'Medical')
+    medical_capacity = Responder.find_capacity(medical_responders)
 
-  	police_responders = Responder.where(type: 'Police')
-  	police_capacity = Responder.find_capacity(police_responders)
-
-  	medical_responders = Responder.where(type: 'Medical')
-  	medical_capacity = Responder.find_capacity(medical_responders)
-
-    capacities =  { Fire: fire_capacity, 
-                    Police: police_capacity,
-                    Medical: medical_capacity }
+    { Fire: fire_capacity, Police: police_capacity, Medical: medical_capacity }
   end
-
-  private
 
   def self.find_capacity(responders)
-  	capacity = [0, 0, 0, 0]
-  	responders.each do |responder|
-  	  capacity[0] += responder.capacity
-  	  capacity[1] += responder.capacity
-  	  if responder.on_duty
-  	    capacity[2] += responder.capacity
-  	    capacity[3] += responder.capacity
-  	  end
-  	end
+    capacity = [0, 0, 0, 0]
+    responders.each do |responder|
+      capacity[0] += responder.capacity
+      capacity[1] += responder.capacity
+      if responder.on_duty
+        capacity[2] += responder.capacity
+        capacity[3] += responder.capacity
+      end
+    end
 
-  	capacity
+    capacity
   end
-
-
 end
