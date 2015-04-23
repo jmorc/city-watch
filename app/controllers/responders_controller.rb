@@ -3,10 +3,15 @@ class RespondersController < ApplicationController
 
   def index
     @responders = Responder.all
+
+    if params.key?(:show)
+      render json: { capacity: 'capacity array goes here' }
+      return
+    end
     render 'responders/index'
   end
 
-  def show  
+  def show
     @responder = Responder.find_by_name(params[:id])
     unless @responder
       render json: { message: 'page not found' }, status: 404
@@ -21,9 +26,7 @@ class RespondersController < ApplicationController
 
   def edit
     @responder = Responder.find_by_name(params[:name])
-    unless @responder
-      render json: { message: 'page not found' }, status: 404
-    end
+    render json: { message: 'page not found' }, status: 404 unless @responder
   end
 
   def create
@@ -36,7 +39,7 @@ class RespondersController < ApplicationController
   end
 
   def update
-    if responder_params.has_key?(:on_duty)
+    if responder_params.key?(:on_duty)
       @responder = Responder.find_by_name(params[:id])
       @responder.update_attribute(:on_duty, responder_params[:on_duty])
       render 'responders/show'
