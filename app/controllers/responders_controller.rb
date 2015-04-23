@@ -87,10 +87,6 @@ class RespondersController < ApplicationController
     unpermitted_parameter
   end
 
-  def set_default_response_format
-    request.format = :json unless params[:format]
-  end
-
   def responder_params
     params.require(:responder).permit(:type, :name, :capacity, :id, :on_duty, :emergency_code)
   end

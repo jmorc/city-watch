@@ -1,4 +1,5 @@
 class EmergenciesController < ApplicationController
+  before_action :set_default_response_format
   before_action :set_emergency, only: [:show, :edit, :update, :destroy]
 
   def index
@@ -6,6 +7,7 @@ class EmergenciesController < ApplicationController
   end
 
   def show
+    render 'emergencies/show'
   end
 
   def new
@@ -17,15 +19,27 @@ class EmergenciesController < ApplicationController
 
   def create
     @emergency = Emergency.new(emergency_params)
+    
+    if params[:emergency].key?(:id)
+      parameter_error = true
+      unpermitted_parameter = 'id'
+    elsif params[:emergency].key?(:resolved_at)
+      parameter_error = true
+      unpermitted_parameter = 'resolved_at'
+    else
+      parameter_error = false
+    end
 
-    respond_to do |format|
-      if @emergency.save
-        format.html { redirect_to @emergency, notice: 'Emergency was successfully created.' }
-        format.json { render :show, status: :created, location: @emergency }
-      else
-        format.html { render :new }
-        format.json { render json: @emergency.errors, status: :unprocessable_entity }
-      end
+    if parameter_error
+      message = 'found unpermitted parameter: ' + unpermitted_parameter
+      render json: { message: message }, status: :unprocessable_entity
+      return
+    end
+
+    if @emergency.save
+      render 'emergencies/show', status: :created
+    else
+      render json: { message: @emergency.errors }, status: :unprocessable_entity
     end
   end
 
@@ -51,11 +65,15 @@ class EmergenciesController < ApplicationController
 
   private
 
+  def render_unpermitted_param_error
+    
+  end
+
   def set_emergency
     @emergency = Emergency.find(params[:id])
   end
 
   def emergency_params
-    params[:emergency]
+    params.require(:emergency).permit(:code, :fire_severity, :police_severity, :medical_severity, :full_response)
   end
 end

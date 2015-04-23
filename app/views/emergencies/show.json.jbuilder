@@ -1,1 +1,3 @@
-json.extract! @emergency, :id, :created_at, :updated_at
+json.emergency do
+  json.partial! 'emergencies/emergency', emergency: @emergency
+end

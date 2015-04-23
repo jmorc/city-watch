@@ -1,4 +1,3 @@
-json.array!(@emergencies) do |emergency|
-  json.extract! emergency, :id
-  json.url emergency_url(emergency, format: :json)
+json.emergencies do 
+  json.partial! 'emergencies/emergency', collection: @emergencies, as: :emergency
 end

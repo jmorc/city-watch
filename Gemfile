@@ -11,9 +11,9 @@ group :development, :test do
   gem 'web-console', '~> 2.0'
 end
 
-group :development do
-  gem 'better_errors'
-  gem 'binding_of_caller'
-  gem 'pry-rails'
-  gem 'quiet_assets'
-end
+# group :development do
+#   gem 'better_errors'
+#   gem 'binding_of_caller'
+#   gem 'pry-rails'
+#   gem 'quiet_assets'
+# end
