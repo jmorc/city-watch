@@ -5,7 +5,8 @@ class RespondersController < ApplicationController
     @responders = Responder.all
 
     if params.key?(:show)
-      render json: { capacity: 'capacity array goes here' }
+      capacity = Responder.report_capacity
+      render json: { capacity: capacity }
       return
     end
     render 'responders/index'
