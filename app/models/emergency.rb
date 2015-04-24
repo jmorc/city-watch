@@ -81,15 +81,13 @@ class Emergency < ActiveRecord::Base
       type_responders.permutation(n).each do |responders|
         summed_capacity = 0
         responders.each  { |responder| summed_capacity += responder.capacity }
-
-        if summed_capacity == type_severity(type)
-          self.full_response = true
-          responders.each do |responder|
-            self.responders << responder
-            responder.update_attribute(:emergency_id, id)
-          end
-          return true
+        next unless summed_capacity == type_severity(type)
+        self.full_response = true
+        responders.each do |responder|
+          self.responders << responder
+          responder.update_attribute(:emergency_id, id)
         end
+        return true
       end
     end
 
@@ -116,12 +114,10 @@ class Emergency < ActiveRecord::Base
       type_responders.permutation(n).each do |responders|
         summed_capacity = 0
         responders.each  { |responder| summed_capacity += responder.capacity }
-
-        if summed_capacity > type_severity(type)
-          self.full_response = true
-          over_response_found = true
-          over_responses << [responders, summed_capacity]
-        end
+        next unless summed_capacity > type_severity(type)
+        self.full_response = true
+        over_response_found = true
+        over_responses << [responders, summed_capacity]
       end
     end
 

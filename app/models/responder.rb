@@ -12,25 +12,47 @@ class Responder < ActiveRecord::Base
   belongs_to :emergency
 
   def self.report_capacity
-    fire_responders = Responder.where(type: 'Fire')
-    fire_capacity = Responder.find_capacity(fire_responders)
-    police_responders = Responder.where(type: 'Police')
-    police_capacity = Responder.find_capacity(police_responders)
-    medical_responders = Responder.where(type: 'Medical')
-    medical_capacity = Responder.find_capacity(medical_responders)
-
-    { Fire: fire_capacity, Police: police_capacity, Medical: medical_capacity }
+    { Fire: find_capacity(:Fire),
+      Police: find_capacity(:Police),
+      Medical: find_capacity(:Medical) }
   end
 
-  def self.find_capacity(responders)
-    capacity = [0, 0, 0, 0]
-    responders.each do |responder|
-      capacity[0] += responder.capacity
-      capacity[1] += responder.capacity if responder.emergency.nil?
-      if responder.on_duty
-        capacity[2] += responder.capacity
-        capacity[3] += responder.capacity if responder.emergency.nil?
-      end
+  def self.find_capacity(type)
+    capacity = []
+    dispatched = dispatched_capacity(type)
+
+    capacity[0] = Responder.capacity_of_type(type)
+    capacity[1] = capacity[0] - dispatched
+    capacity[2] = Responder.capacity_of_on_duty_type(type)
+    capacity[3] = capacity[2] - dispatched
+
+    capacity
+  end
+
+  def self.dispatched_capacity(type)
+    responders_of_type = Responder.where(type: type)
+    dispatched_capacity = 0
+    responders_of_type.each do |responder|
+      next if responder.emergency.nil?
+      dispatched_capacity += responder.capacity unless responder.emergency.nil?
+    end
+
+    dispatched_capacity
+  end
+
+  def self.capacity_of_type(type)
+    capacity = 0
+    Responder.where(type: type).find_each do |responder|
+      capacity += responder.capacity
+    end
+
+    capacity
+  end
+
+  def self.capacity_of_on_duty_type(type)
+    capacity = 0
+    Responder.where(type: type, on_duty: true).find_each do |responder|
+      capacity += responder.capacity
     end
 
     capacity
