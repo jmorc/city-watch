@@ -10,7 +10,7 @@ class Responder < ActiveRecord::Base
   self.inheritance_column = nil
 
   belongs_to :emergency
- 
+
   def self.report_capacity
     fire_responders = Responder.where(type: 'Fire')
     fire_capacity = Responder.find_capacity(fire_responders)

@@ -29,7 +29,6 @@ class EmergenciesController < ApplicationController
     return if unpermitted_params?
     @emergency = Emergency.new(emergency_params)
 
-
     if @emergency.save
       @emergency.dispatch_responders
       @responder_names = @emergency.responder_names

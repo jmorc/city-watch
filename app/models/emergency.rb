@@ -10,9 +10,7 @@ class Emergency < ActiveRecord::Base
     emergencies = Emergency.all
     full_responses = [0, emergencies.length]
     emergencies.each do |emergency|
-      if emergency.full_response
-        full_responses[0] += 1
-      end
+      full_responses[0] += 1 if emergency.full_response
     end
 
     full_responses
@@ -20,12 +18,12 @@ class Emergency < ActiveRecord::Base
 
   def dispatch_responders
     return if handle_zero_severity_emergency?
-    [:Fire, :Police, :Medical].each {|type| self.dispatch(type) }
-    self.save
+    [:Fire, :Police, :Medical].each { |type| dispatch(type) }
+    save
   end
 
   def dispatch(type)
-    return if self.type_severity(type) == 0
+    return if type_severity(type) == 0
     return if responders_overwhelmed?(type)
     return if single_responder?(type)
     return if multiple_responders?(type)
@@ -33,19 +31,19 @@ class Emergency < ActiveRecord::Base
   end
 
   def dispatch_all(type)
-    Responder.where(type: type, on_duty: true).each do |responder|
-      self.responders << responder
-      responder.update_attribute(:emergency_id, self.id)
+    Responder.where(type: type, on_duty: true).find_each do |responder|
+      responders << responder
+      responder.update_attribute(:emergency_id, id)
     end
   end
 
   def resolved?
-    !self.resolved_at.nil? && (self.resolved_at <= Time.now)
+    !resolved_at.nil? && (resolved_at <= Time.zone.now)
   end
 
   def responder_names
     responder_names = []
-    self.responders.each do |responder|
+    responders.each do |responder|
       responder_names << responder.name
     end
 
@@ -55,13 +53,13 @@ class Emergency < ActiveRecord::Base
   def type_severity(type)
     case type
     when :Fire
-      return self.fire_severity
+      return fire_severity
     when :Police
-      return self.police_severity
+      return police_severity
     when :Medical
-      return self.medical_severity
+      return medical_severity
     else
-      raise 'unknown responder type'
+      fail 'unknown responder type'
     end
   end
 
@@ -69,7 +67,7 @@ class Emergency < ActiveRecord::Base
 
   def handle_zero_severity_emergency?
     zero_severity = false
-    if (self.fire_severity + self.police_severity + self.medical_severity) == 0
+    if (fire_severity + police_severity + medical_severity) == 0
       self.full_response = true
       zero_severity = true
     end
@@ -78,17 +76,17 @@ class Emergency < ActiveRecord::Base
   end
 
   def multiple_responders?(type)
-   type_responders = Responder.where(type: type.to_s, on_duty: true)
+    type_responders = Responder.where(type: type.to_s, on_duty: true)
     (2..type_responders.length).each do |n|
       type_responders.permutation(n).each do |responders|
         summed_capacity = 0
         responders.each  { |responder| summed_capacity += responder.capacity }
 
-        if summed_capacity == self.type_severity(type)
+        if summed_capacity == type_severity(type)
           self.full_response = true
           responders.each do |responder|
             self.responders << responder
-            responder.update_attribute(:emergency_id, self.id)
+            responder.update_attribute(:emergency_id, id)
           end
           return true
         end
@@ -100,8 +98,8 @@ class Emergency < ActiveRecord::Base
 
   def responders_overwhelmed?(type)
     overwhelmed = false
-    if Responder.available_capacity(type) < self.type_severity(type)
-      self.dispatch_all(type)
+    if Responder.available_capacity(type) < type_severity(type)
+      dispatch_all(type)
       self.full_response = false
       overwhelmed = true
     end
@@ -119,7 +117,7 @@ class Emergency < ActiveRecord::Base
         summed_capacity = 0
         responders.each  { |responder| summed_capacity += responder.capacity }
 
-        if summed_capacity > self.type_severity(type)
+        if summed_capacity > type_severity(type)
           self.full_response = true
           over_response_found = true
           over_responses << [responders, summed_capacity]
@@ -131,7 +129,7 @@ class Emergency < ActiveRecord::Base
       response = over_responses.min_by { |el| el[1] }
       response[0].each do |responder|
         self.responders << responder
-        responder.update_attribute(:emergency_id, self.id)
+        responder.update_attribute(:emergency_id, id)
       end
     end
 
@@ -140,12 +138,12 @@ class Emergency < ActiveRecord::Base
 
   def single_responder?(type)
     single_responder = false
-    responder = Responder.where(type: type.to_s, 
-                                capacity: self.type_severity(type),
+    responder = Responder.where(type: type.to_s,
+                                capacity: type_severity(type),
                                 on_duty: true)
     if responder.length > 0
-      self.responders << responder[0]
-      responder[0].update_attribute(:emergency_id, self.id)
+      responders << responder[0]
+      responder[0].update_attribute(:emergency_id, id)
       self.full_response = true
       single_responder = true
     end
