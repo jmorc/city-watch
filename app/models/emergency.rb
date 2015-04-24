@@ -25,8 +25,8 @@ class Emergency < ActiveRecord::Base
   def dispatch(type)
     return if type_severity(type) == 0
     return if responders_overwhelmed?(type)
-    return if single_responder?(type)
-    return if multiple_responders?(type)
+    return if Responder.single_responder?(self, type)
+    return if Responder.multiple_responders?(self, type)
     return if must_over_respond?(type)
   end
 
@@ -75,25 +75,6 @@ class Emergency < ActiveRecord::Base
     zero_severity
   end
 
-  def multiple_responders?(type)
-    type_responders = Responder.where(type: type.to_s, on_duty: true)
-    (2..type_responders.length).each do |n|
-      type_responders.permutation(n).each do |responders|
-        summed_capacity = 0
-        responders.each  { |responder| summed_capacity += responder.capacity }
-        next unless summed_capacity == type_severity(type)
-        self.full_response = true
-        responders.each do |responder|
-          self.responders << responder
-          responder.update_attribute(:emergency_id, id)
-        end
-        return true
-      end
-    end
-
-    false
-  end
-
   def responders_overwhelmed?(type)
     overwhelmed = false
     if Responder.available_capacity(type) < type_severity(type)
@@ -106,44 +87,28 @@ class Emergency < ActiveRecord::Base
   end
 
   def must_over_respond?(type)
-    over_response_found = false
-    over_responses = []
+    over_response_found, over_responses = false, []
     type_responders = Responder.where(type: type.to_s, on_duty: true)
 
-    (1..type_responders.length).each do |n|
-      type_responders.permutation(n).each do |responders|
-        summed_capacity = 0
-        responders.each  { |responder| summed_capacity += responder.capacity }
-        next unless summed_capacity > type_severity(type)
-        self.full_response = true
-        over_response_found = true
-        over_responses << [responders, summed_capacity]
-      end
+    (1..type_responders.length).each do |group_size|
+      possible_responses = identify_over_responses(type_responders, group_size, type)
+      over_responses.concat(possible_responses)
     end
 
-    if over_response_found
-      response = over_responses.min_by { |el| el[1] }
-      response[0].each do |responder|
-        self.responders << responder
-        responder.update_attribute(:emergency_id, id)
-      end
-    end
-
+    response = over_responses.min_by { |el| el[1] }
+    Responder.dispatch(response[0], self)
     over_response_found
   end
 
-  def single_responder?(type)
-    single_responder = false
-    responder = Responder.where(type: type.to_s,
-                                capacity: type_severity(type),
-                                on_duty: true)
-    if responder.length > 0
-      responders << responder[0]
-      responder[0].update_attribute(:emergency_id, id)
+  def identify_over_responses(responders, group_size, type)
+    over_responses = []
+    responders.permutation(group_size).each do |responder_group|
+      summed_capacity = Responder.summed_capacity(responder_group)
+      next unless summed_capacity > type_severity(type)
       self.full_response = true
-      single_responder = true
+      over_responses << [responders, summed_capacity]
     end
 
-    single_responder
+    over_responses
   end
 end
