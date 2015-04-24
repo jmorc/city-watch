@@ -21,18 +21,15 @@ class Emergency < ActiveRecord::Base
   def dispatch_responders
     return if handle_zero_severity_emergency?
     [:Fire, :Police, :Medical].each {|type| self.dispatch(type) }
+    self.save
   end
 
   def dispatch(type)
-    # return if handle_zero_severity_emergency?(type)
-    # I should not be setting full_response in 'type'
-    # because response could be full for one type and not the others
     return if self.type_severity(type) == 0
     return if responders_overwhelmed?(type)
     return if single_responder?(type)
     return if multiple_responders?(type)
     return if must_over_respond?(type)
-    # fail
   end
 
   def dispatch_all(type)
@@ -113,8 +110,6 @@ class Emergency < ActiveRecord::Base
   end
 
   def must_over_respond?(type)
-    # severity is less than available responders, but no combination
-    # of responders matches severity exactly
     over_response_found = false
     over_responses = []
     type_responders = Responder.where(type: type.to_s, on_duty: true)

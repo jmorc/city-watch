@@ -39,17 +39,4 @@ class Responder < ActiveRecord::Base
   def self.available_capacity(type)
     Responder.report_capacity[type][2]
   end
-
-  def self.available_fire_capacity
-    Responder.report_capacity[:Fire][1]
-  end
-
-  def self.available_police_capacity
-    Responder.report_capacity[:Police][1]
-  end
-  
-  def self.available_medical_capacity
-    Responder.report_capacity[:Medical][1]
-  end
-
 end
