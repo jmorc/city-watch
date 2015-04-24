@@ -36,6 +36,10 @@ class Responder < ActiveRecord::Base
     capacity
   end
 
+  def self.available_capacity(type)
+    Responder.report_capacity[type][1]
+  end
+
   def self.available_fire_capacity
     Responder.report_capacity[:Fire][1]
   end
