@@ -9,6 +9,8 @@ class Responder < ActiveRecord::Base
 
   self.inheritance_column = nil
 
+  belongs_to :emergency
+ 
   def self.report_capacity
     fire_responders = Responder.where(type: 'Fire')
     fire_capacity = Responder.find_capacity(fire_responders)
@@ -24,13 +26,26 @@ class Responder < ActiveRecord::Base
     capacity = [0, 0, 0, 0]
     responders.each do |responder|
       capacity[0] += responder.capacity
-      capacity[1] += responder.capacity
+      capacity[1] += responder.capacity if responder.emergency.nil?
       if responder.on_duty
         capacity[2] += responder.capacity
-        capacity[3] += responder.capacity
+        capacity[3] += responder.capacity if responder.emergency.nil?
       end
     end
 
     capacity
   end
+
+  def self.available_fire_capacity
+    Responder.report_capacity[:Fire][1]
+  end
+
+  def self.available_police_capacity
+    Responder.report_capacity[:Police][1]
+  end
+  
+  def self.available_medical_capacity
+    Responder.report_capacity[:Medical][1]
+  end
+
 end

@@ -3,6 +3,7 @@ class EmergenciesController < ApplicationController
 
   def index
     @emergencies = Emergency.all
+    @full_responses = Emergency.count_full_responses
     render 'emergencies/index'
   end
 
@@ -11,6 +12,7 @@ class EmergenciesController < ApplicationController
     if !@emergency
       render_404_error
     else
+      @responder_names = @emergency.responder_names
       render 'emergencies/show'
     end
   end
@@ -27,7 +29,10 @@ class EmergenciesController < ApplicationController
     return if unpermitted_params?
     @emergency = Emergency.new(emergency_params)
 
+
     if @emergency.save
+      @emergency.dispatch_responders
+      @responder_names = @emergency.responder_names
       render 'emergencies/show', status: :created
     else
       render json: { message: @emergency.errors }, status: :unprocessable_entity
@@ -42,6 +47,7 @@ class EmergenciesController < ApplicationController
     end
     @emergency = Emergency.find_by_code(params[:id])
     @emergency.update(emergency_params)
+    @responder_names = @emergency.responder_names
     render 'emergencies/show'
   end
 
@@ -81,6 +87,6 @@ class EmergenciesController < ApplicationController
   def emergency_params
     params.require(:emergency).permit(:code, :fire_severity,
                                       :police_severity, :medical_severity,
-                                      :full_response, :resolved_at)
+                                      :full_response, :full_response, :resolved_at)
   end
 end
