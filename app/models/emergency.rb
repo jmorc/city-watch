@@ -42,6 +42,10 @@ class Emergency < ActiveRecord::Base
     end
   end
 
+  def resolved?
+    !self.resolved_at.nil? && (self.resolved_at <= Time.now)
+  end
+
   def responder_names
     responder_names = []
     self.responders.each do |responder|

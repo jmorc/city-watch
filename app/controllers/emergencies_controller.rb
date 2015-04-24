@@ -47,6 +47,7 @@ class EmergenciesController < ApplicationController
     end
     @emergency = Emergency.find_by_code(params[:id])
     @emergency.update(emergency_params)
+    @emergency.responders.clear if @emergency.resolved?
     @responder_names = @emergency.responder_names
     render 'emergencies/show'
   end
