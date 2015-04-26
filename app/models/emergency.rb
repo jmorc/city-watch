@@ -20,17 +20,19 @@ class Emergency < ActiveRecord::Base
   end
 
   def dispatch_responders
-    return if handle_zero_severity_emergency?
-    [:Fire, :Police, :Medical].each { |type| dispatch(type) }
+    full_responses = []
+    types = [:Fire, :Police, :Medical]
+    types.each { |type| full_responses << dispatch(type) }
+    self.full_response = true if full_responses.all?
     save!
   end
 
   def dispatch(type)
-    return if type_severity(type) == 0
-    return if responders_overwhelmed?(type)
-    return if Responder.single_responder?(self, type)
-    return if Responder.multiple_responders?(self, type)
-    return if must_over_respond?(type)
+    return false if responders_overwhelmed?(type)
+    return true if type_severity(type) == 0
+    return true if Responder.single_responder?(self, type)
+    return true if Responder.multiple_responders?(self, type)
+    return true if must_over_respond?(type)
   end
 
   def dispatch_all(type)
@@ -71,7 +73,6 @@ class Emergency < ActiveRecord::Base
   def handle_zero_severity_emergency?
     zero_severity = false
     if (fire_severity + police_severity + medical_severity) == 0
-      self.full_response = true
       zero_severity = true
     end
 
@@ -82,7 +83,6 @@ class Emergency < ActiveRecord::Base
     overwhelmed = false
     if Responder.available_capacity(type) < type_severity(type)
       dispatch_all(type)
-      self.full_response = false
       overwhelmed = true
     end
 
@@ -108,7 +108,6 @@ class Emergency < ActiveRecord::Base
     responders.permutation(group_size).each do |responder_group|
       summed_capacity = Responder.summed_capacity(responder_group)
       next unless summed_capacity > type_severity(type)
-      self.full_response = true
       over_responses << [responders, summed_capacity]
     end
 

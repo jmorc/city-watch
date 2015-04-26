@@ -72,7 +72,6 @@ class Responder < ActiveRecord::Base
       type_responders.permutation(n).each do |responders|
         summed_capacity = Responder.summed_capacity(responders)
         next unless summed_capacity == emergency.type_severity(type)
-        emergency.full_response = true
         Responder.dispatch(responders, emergency)
         return true
       end
@@ -99,7 +98,6 @@ class Responder < ActiveRecord::Base
     if responder.length > 0
       emergency.responders << responder[0]
       responder[0].update_attribute(:emergency_code, emergency.code)
-      emergency.full_response = true
       single_responder = true
     end
 
