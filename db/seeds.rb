@@ -6,8 +6,8 @@ p100 = Responder.create( type: 'Police', name: 'P-100', capacity: 3 )
 p101 = Responder.create( type: 'Police', name: 'P-101', capacity: 4 )
 p100.update_attribute( :on_duty, true )
 
-m100 = Responder.create( type: 'Police', name: 'M-100', capacity: 5 )
-m101 = Responder.create( type: 'Police', name: 'M-101', capacity: 1 )
+m100 = Responder.create( type: 'Medical', name: 'M-100', capacity: 5 )
+m101 = Responder.create( type: 'Medical', name: 'M-101', capacity: 1 )
 m100.update_attribute( :on_duty, true )
 m101.update_attribute( :on_duty, true )
 
