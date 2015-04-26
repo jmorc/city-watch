@@ -1,6 +1,4 @@
 class EmergenciesController < ApplicationController
-  before_action :set_default_response_format
-
   def index
     @emergencies = Emergency.all
     @full_responses = Emergency.count_full_responses
@@ -10,7 +8,7 @@ class EmergenciesController < ApplicationController
   def show
     @emergency = Emergency.find_by_code(params[:id])
     if !@emergency
-      render_404_error
+      not_found
     else
       @responder_names = @emergency.responder_names
       render 'emergencies/show'
@@ -18,11 +16,11 @@ class EmergenciesController < ApplicationController
   end
 
   def new
-    render_404_error
+    not_found
   end
 
   def edit
-    render_404_error
+    not_found
   end
 
   def create
@@ -52,7 +50,7 @@ class EmergenciesController < ApplicationController
   end
 
   def destroy
-    render_404_error
+    not_found
   end
 
   private
@@ -74,14 +72,6 @@ class EmergenciesController < ApplicationController
     end
 
     parameter_error
-  end
-
-  def render_404_error
-    render json: { message: 'page not found' }, status: 404
-  end
-
-  def set_emergency
-    @emergency = Emergency.find(params[:id])
   end
 
   def emergency_params

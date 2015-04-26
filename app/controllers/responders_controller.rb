@@ -1,6 +1,4 @@
 class RespondersController < ApplicationController
-  before_action :set_default_response_format
-
   def index
     @responders = Responder.all
 
@@ -15,19 +13,19 @@ class RespondersController < ApplicationController
   def show
     @responder = Responder.find_by_name(params[:id])
     unless @responder
-      render json: { message: 'page not found' }, status: 404
+      not_found
       return
     end
     render 'responders/show'
   end
 
   def new
-    render json: { message: 'page not found' }, status: 404
+    not_found
   end
 
   def edit
     @responder = Responder.find_by_name(params[:name])
-    render json: { message: 'page not found' }, status: 404 unless @responder
+    not_found unless @responder
   end
 
   def create
@@ -53,7 +51,7 @@ class RespondersController < ApplicationController
   def destroy
     @responder = Responder.find_by_name(params[:name])
     if @responder.nil?
-      render json: { message: 'page not found' }, status: 404
+      not_found
     else
       @responder.destroy unless @responder.nil?
     end
