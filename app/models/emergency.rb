@@ -69,6 +69,16 @@ class Emergency < ActiveRecord::Base
 
   private
 
+  def adequate_response?(responses, type)
+    responses.each do |response|
+      if Responder.summed_capacity(response[0]) == type_severity(type)
+        return true
+      end
+    end
+
+    false
+  end
+
   def responders_overwhelmed?(type)
     overwhelmed = false
     if Responder.available_capacity(type) < type_severity(type)
@@ -86,6 +96,7 @@ class Emergency < ActiveRecord::Base
     (1..type_responders.length).each do |group_size|
       responses = identify_responses(type_responders, group_size, type)
       all_responses.concat(responses)
+      break if adequate_response?(responses, type)
     end
 
     response = all_responses.min_by { |el| el[1] } unless responses.nil?

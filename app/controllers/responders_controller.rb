@@ -12,10 +12,7 @@ class RespondersController < ApplicationController
 
   def show
     @responder = Responder.find_by_name(params[:id])
-    unless @responder
-      not_found
-      return
-    end
+    return not_found unless @responder
     render 'responders/show'
   end
 
@@ -24,27 +21,24 @@ class RespondersController < ApplicationController
   end
 
   def edit
-    @responder = Responder.find_by_name(params[:name])
-    not_found unless @responder
+    not_found
   end
 
   def create
-    @responder = Responder.new(responder_params)
+    @responder = Responder.new(create_params)
     if @responder.save
       render 'responders/show', status: :created
     else
-      render_create_errors(@responder)
+      render json: { message: @responder.errors }, status: :unprocessable_entity
     end
   end
 
   def update
-    if responder_params.key?(:on_duty)
-      @responder = Responder.find_by_name(params[:id])
-      @responder.update_attribute(:on_duty, responder_params[:on_duty])
+    @responder = Responder.find_by_name(params[:id])
+    if @responder.update(update_params)
       render 'responders/show'
     else
-      message = 'found unpermitted parameter: ' + responder_params.keys[0]
-      render json: { message: message }, status: :unprocessable_entity
+      render json: { message: @responder.errors }, status: :unprocessable_entity
     end
   end
 
@@ -59,33 +53,11 @@ class RespondersController < ApplicationController
 
   private
 
-  def render_create_errors(responder)
-    unpermitted_parameter = check_unpermitted_params(responder)
-    if unpermitted_parameter[0]
-      message = 'found unpermitted parameter: ' + unpermitted_parameter[1]
-      render json: { message: message }, status: :unprocessable_entity
-    else
-      responder.errors.delete(:on_duty)
-      responder.errors.delete(:id)
-      responder.errors.delete(:emergency_code)
-      render json: { message: @responder.errors }, status: :unprocessable_entity
-    end
+  def create_params
+    params.require(:responder).permit(:type, :name, :capacity)
   end
 
-  def check_unpermitted_params(responder)
-    if responder.errors[:on_duty][0] == 'on_duty present'
-      unpermitted_parameter = [true, 'on_duty']
-    elsif responder.errors[:emergency_code][0] == 'emergency_code present'
-      unpermitted_parameter = [true, 'emergency_code']
-    elsif responder.errors[:id][0] == 'id present'
-      unpermitted_parameter = [true, 'id']
-    else
-      unpermitted_parameter = [false]
-    end
-    unpermitted_parameter
-  end
-
-  def responder_params
-    params.require(:responder).permit(:type, :name, :capacity, :id, :on_duty, :emergency_code)
+  def update_params
+    params.require(:responder).permit(:on_duty)
   end
 end

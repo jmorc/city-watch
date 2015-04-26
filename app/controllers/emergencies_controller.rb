@@ -24,8 +24,7 @@ class EmergenciesController < ApplicationController
   end
 
   def create
-    return if unpermitted_params?
-    @emergency = Emergency.new(emergency_params)
+    @emergency = Emergency.new(create_params)
 
     if @emergency.save
       @emergency.dispatch_responders
@@ -37,16 +36,14 @@ class EmergenciesController < ApplicationController
   end
 
   def update
-    if params[:emergency].key?(:code)
-      render json: { message: 'found unpermitted parameter: code' },
-             status: :unprocessable_entity
-      return
-    end
     @emergency = Emergency.find_by_code(params[:id])
-    @emergency.update(emergency_params)
-    @emergency.responders.clear if @emergency.resolved?
-    @responder_names = @emergency.responder_names
-    render 'emergencies/show'
+    if @emergency.update(update_params)
+      @emergency.responders.clear if @emergency.resolved?
+      @responder_names = @emergency.responder_names
+      render 'emergencies/show'
+    else
+      render json: { message: @emergency.errors }, status: :unprocessable_entity
+    end
   end
 
   def destroy
@@ -55,28 +52,15 @@ class EmergenciesController < ApplicationController
 
   private
 
-  def unpermitted_params?
-    if params[:emergency].key?(:id)
-      parameter_error = true
-      unpermitted_parameter = 'id'
-    elsif params[:emergency].key?(:resolved_at)
-      parameter_error = true
-      unpermitted_parameter = 'resolved_at'
-    else
-      parameter_error = false
-    end
-
-    if parameter_error
-      message = 'found unpermitted parameter: ' + unpermitted_parameter
-      render json: { message: message }, status: :unprocessable_entity
-    end
-
-    parameter_error
+  def create_params
+    params.require(:emergency).permit(:fire_severity,
+                                      :police_severity,
+                                      :medical_severity, :code)
   end
 
-  def emergency_params
-    params.require(:emergency).permit(:code, :fire_severity,
-                                      :police_severity, :medical_severity,
-                                      :full_response, :full_response, :resolved_at)
+  def update_params
+    params.require(:emergency).permit(:fire_severity,
+                                      :police_severity,
+                                      :medical_severity, :resolved_at)
   end
 end

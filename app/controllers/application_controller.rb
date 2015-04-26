@@ -1,12 +1,11 @@
 class ApplicationController < ActionController::Base
+  protect_from_forgery with: :null_session
   before_action :set_default_response_format
 
   ActionController::Parameters.action_on_unpermitted_parameters = :raise
 
   rescue_from ActionController::RoutingError, with: :render_404
-  rescue_from ActionController::ParameterMissing, with: :missing_params
   rescue_from ActionController::UnpermittedParameters, with: :unpermitted_params
-
 
   def set_default_response_format
     request.format = :json unless params[:format]
@@ -17,14 +16,10 @@ class ApplicationController < ActionController::Base
   end
 
   def not_found
-    raise ActionController::RoutingError.new('Not Found')
+    fail ActionController::RoutingError, 'Not Found'
   end
 
-  def missing_params
+  def unpermitted_params(error)
+    render json: { message: error.to_s }, status: :unprocessable_entity
   end
-
-  def unpermitted_params
-  end
-
-
 end
