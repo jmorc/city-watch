@@ -4,7 +4,10 @@ class Emergency < ActiveRecord::Base
             numericality: { greater_than_or_equal_to: 0 }
   validates :code, presence: true, uniqueness: true
 
-  has_many :responders
+  has_many :responders,
+           class_name: 'Responder',
+           primary_key: :code,
+           foreign_key: :emergency_code
 
   def self.count_full_responses
     emergencies = Emergency.all
@@ -19,7 +22,7 @@ class Emergency < ActiveRecord::Base
   def dispatch_responders
     return if handle_zero_severity_emergency?
     [:Fire, :Police, :Medical].each { |type| dispatch(type) }
-    save
+    save!
   end
 
   def dispatch(type)
@@ -33,7 +36,7 @@ class Emergency < ActiveRecord::Base
   def dispatch_all(type)
     Responder.where(type: type, on_duty: true).find_each do |responder|
       responders << responder
-      responder.update_attribute(:emergency_id, id)
+      responder.update_attribute(:emergency_code, code)
     end
   end
 

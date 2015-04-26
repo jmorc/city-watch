@@ -9,61 +9,13 @@ class Responder < ActiveRecord::Base
 
   self.inheritance_column = nil
 
-  belongs_to :emergency
+  belongs_to :emergency,
+             foreign_key: :emergency_code,
+             primary_key: :code,
+             class_name: 'Emergency'
 
-  def self.dispatch(responders, emergency)
-    responders.each do |responder|
-      emergency.responders << responder
-      responder.update_attribute(:emergency_id, emergency.id)
-    end
-  end
-
-  def self.summed_capacity(responders)
-    responders.map(&:capacity).inject { |a, e| a + e }
-  end
-
-  def self.report_capacity
-    { Fire: find_capacity(:Fire),
-      Police: find_capacity(:Police),
-      Medical: find_capacity(:Medical) }
-  end
-
-  def self.single_responder?(emergency, type)
-    single_responder = false
-    responder = Responder.where(type: type.to_s,
-                                capacity: emergency.type_severity(type),
-                                on_duty: true)
-    if responder.length > 0
-      emergency.responders << responder[0]
-      responder[0].update_attribute(:emergency_id, emergency.id)
-      emergency.full_response = true
-      single_responder = true
-    end
-
-    single_responder
-  end
-
-  def self.find_capacity(type)
-    capacity = []
-    dispatched = dispatched_capacity(type)
-
-    capacity[0] = Responder.capacity_of_type(type)
-    capacity[1] = capacity[0] - dispatched
-    capacity[2] = Responder.capacity_of_on_duty_type(type)
-    capacity[3] = capacity[2] - dispatched
-
-    capacity
-  end
-
-  def self.dispatched_capacity(type)
-    responders_of_type = Responder.where(type: type)
-    dispatched_capacity = 0
-    responders_of_type.each do |responder|
-      next if responder.emergency.nil?
-      dispatched_capacity += responder.capacity unless responder.emergency.nil?
-    end
-
-    dispatched_capacity
+  def self.available_capacity(type)
+    Responder.report_capacity[type][2]
   end
 
   def self.capacity_of_type(type)
@@ -84,8 +36,34 @@ class Responder < ActiveRecord::Base
     capacity
   end
 
-  def self.available_capacity(type)
-    Responder.report_capacity[type][2]
+  def self.dispatch(responders, emergency)
+    responders.each do |responder|
+      emergency.responders << responder
+      responder.update_attribute(:emergency_code, emergency.code)
+    end
+  end
+
+  def self.dispatched_capacity(type)
+    responders_of_type = Responder.where(type: type)
+    dispatched_capacity = 0
+    responders_of_type.each do |responder|
+      next if responder.emergency.nil?
+      dispatched_capacity += responder.capacity unless responder.emergency.nil?
+    end
+
+    dispatched_capacity
+  end
+
+  def self.find_capacity(type)
+    capacity = []
+    dispatched = dispatched_capacity(type)
+
+    capacity[0] = Responder.capacity_of_type(type)
+    capacity[1] = capacity[0] - dispatched
+    capacity[2] = Responder.capacity_of_on_duty_type(type)
+    capacity[3] = capacity[2] - dispatched
+
+    capacity
   end
 
   def self.multiple_responders?(emergency, type)
@@ -101,5 +79,30 @@ class Responder < ActiveRecord::Base
     end
 
     false
+  end
+
+  def self.summed_capacity(responders)
+    responders.map(&:capacity).inject { |a, e| a + e }
+  end
+
+  def self.report_capacity
+    { Fire: find_capacity(:Fire),
+      Police: find_capacity(:Police),
+      Medical: find_capacity(:Medical) }
+  end
+
+  def self.single_responder?(emergency, type)
+    single_responder = false
+    responder = Responder.where(type: type.to_s,
+                                capacity: emergency.type_severity(type),
+                                on_duty: true)
+    if responder.length > 0
+      emergency.responders << responder[0]
+      responder[0].update_attribute(:emergency_code, emergency.code)
+      emergency.full_response = true
+      single_responder = true
+    end
+
+    single_responder
   end
 end
