@@ -70,7 +70,6 @@ class Emergency < ActiveRecord::Base
   private
 
   def adequate_response_found?(responses, type)
-    return false if responses.empty?
     responses.each do |response|
       if Responder.summed_capacity(response.first) >= type_severity(type)
         return true
@@ -106,12 +105,11 @@ class Emergency < ActiveRecord::Base
   end
 
   def responders_overwhelmed?(type)
-    overwhelmed = false
     if Responder.available_capacity(type) < type_severity(type)
       dispatch_all(type)
-      overwhelmed = true
+      return true
     end
 
-    overwhelmed
+    false
   end
 end

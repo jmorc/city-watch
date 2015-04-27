@@ -35,7 +35,6 @@ class Responder < ActiveRecord::Base
     responders_of_type = Responder.where(type: type)
     dispatched_capacity = 0
     responders_of_type.each do |responder|
-      next if responder.emergency.nil?
       dispatched_capacity += responder.capacity unless responder.emergency.nil?
     end
 

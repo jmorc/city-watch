@@ -25,7 +25,7 @@ class RespondersController < ApplicationController
   end
 
   def create
-    @responder = Responder.new(create_params)
+    @responder = Responder.new(responder_create_params)
     if @responder.save
       render 'responders/show', status: :created
     else
@@ -35,7 +35,7 @@ class RespondersController < ApplicationController
 
   def update
     @responder = Responder.find_by_name(params[:id])
-    if @responder.update(update_params)
+    if @responder.update(responder_update_params)
       render 'responders/show'
     else
       render json: { message: @responder.errors }, status: :unprocessable_entity
@@ -53,11 +53,11 @@ class RespondersController < ApplicationController
 
   private
 
-  def create_params
+  def responder_create_params
     params.require(:responder).permit(:type, :name, :capacity)
   end
 
-  def update_params
+  def responder_update_params
     params.require(:responder).permit(:on_duty)
   end
 end

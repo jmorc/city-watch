@@ -24,7 +24,7 @@ class EmergenciesController < ApplicationController
   end
 
   def create
-    @emergency = Emergency.new(create_params)
+    @emergency = Emergency.new(emergency_create_params)
 
     if @emergency.save
       @emergency.dispatch_responders
@@ -37,7 +37,7 @@ class EmergenciesController < ApplicationController
 
   def update
     @emergency = Emergency.find_by_code(params[:id])
-    if @emergency.update(update_params)
+    if @emergency.update(emergency_update_params)
       @emergency.responders.clear if @emergency.resolved?
       @responder_names = @emergency.responder_names
       render 'emergencies/show'
@@ -52,13 +52,13 @@ class EmergenciesController < ApplicationController
 
   private
 
-  def create_params
+  def emergency_create_params
     params.require(:emergency).permit(:fire_severity,
                                       :police_severity,
                                       :medical_severity, :code)
   end
 
-  def update_params
+  def emergency_update_params
     params.require(:emergency).permit(:fire_severity,
                                       :police_severity,
                                       :medical_severity, :resolved_at)
