@@ -20,8 +20,8 @@ class Emergency < ActiveRecord::Base
   end
 
   def dispatch_responders
-    full_responses, types = [], [:Fire, :Police, :Medical]
-    types.each { |type| full_responses << dispatch(type) }
+    full_responses, response_types = [], [:Fire, :Police, :Medical]
+    response_types.each { |type| full_responses << dispatch(type) }
     self.full_response = true if full_responses.all?
     save!
   end
@@ -29,7 +29,7 @@ class Emergency < ActiveRecord::Base
   def dispatch(type)
     return false if responders_overwhelmed?(type)
     return true if type_severity(type) == 0
-    issue_response(type)
+    dispatch_standard_response(type)
 
     true
   end
@@ -46,12 +46,12 @@ class Emergency < ActiveRecord::Base
   end
 
   def responder_names
-    responder_names = []
+    names = []
     responders.each do |responder|
-      responder_names << responder.name
+      names << responder.name
     end
 
-    responder_names
+    names
   end
 
   def type_severity(type)
@@ -69,14 +69,40 @@ class Emergency < ActiveRecord::Base
 
   private
 
-  def adequate_response?(responses, type)
+  def adequate_response_found?(responses, type)
+    return false if responses.empty?
     responses.each do |response|
-      if Responder.summed_capacity(response[0]) == type_severity(type)
+      if Responder.summed_capacity(response.first) >= type_severity(type)
         return true
       end
     end
 
     false
+  end
+
+  def dispatch_standard_response(type)
+    all_responses, responses = [], nil
+    responders_of_type = Responder.where(type: type, on_duty: true)
+
+    (1..responders_of_type.length).each do |group_size|
+      responses = possible_responses(responders_of_type, group_size, type)
+      all_responses.concat(responses)
+      break if adequate_response_found?(responses, type)
+    end
+
+    response = all_responses.min_by { |el| el[1] } unless responses.nil?
+    Responder.dispatch(response[0], self)
+  end
+
+  def possible_responses(responders, group_size, type)
+    responses = []
+    responders.permutation(group_size).each do |responder_group|
+      summed_capacity = Responder.summed_capacity(responder_group)
+      next unless summed_capacity >= type_severity(type)
+      responses << [responder_group, summed_capacity]
+    end
+
+    responses
   end
 
   def responders_overwhelmed?(type)
@@ -87,30 +113,5 @@ class Emergency < ActiveRecord::Base
     end
 
     overwhelmed
-  end
-
-  def issue_response(type)
-    all_responses, responses = [], nil
-    type_responders = Responder.where(type: type.to_s, on_duty: true)
-
-    (1..type_responders.length).each do |group_size|
-      responses = identify_responses(type_responders, group_size, type)
-      all_responses.concat(responses)
-      break if adequate_response?(responses, type)
-    end
-
-    response = all_responses.min_by { |el| el[1] } unless responses.nil?
-    Responder.dispatch(response[0], self)
-  end
-
-  def identify_responses(responders, group_size, type)
-    responses = []
-    responders.permutation(group_size).each do |responder_group|
-      summed_capacity = Responder.summed_capacity(responder_group)
-      next unless summed_capacity >= type_severity(type)
-      responses << [responder_group, summed_capacity]
-    end
-
-    responses
   end
 end
