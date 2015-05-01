@@ -1,6 +1,6 @@
 # City Watch - RailsChallenge v1.0
 
-Welcome to the very first **rails**challenge!
+My solution to the first challenge from [railschallenge.com](http://www.railschallenge.com/).  The challengers were provided a Rails skeleton with tests to drive the development of the JSON API.  The database, models, controllers, and views were all created by the challenge contestants (in this case, me!).  Below is the original problem description.
 
 ## Late one Friday at the office...
 
